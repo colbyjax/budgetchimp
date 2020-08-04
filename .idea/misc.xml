@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="MavenProjectsManager">
+    <option name="originalFiles">
+      <list>
+        <option value="$PROJECT_DIR$/services/api/pom.xml" />
+        <option value="$PROJECT_DIR$/services/lambda/HelloWorldFunction/pom.xml" />
+        <option value="$PROJECT_DIR$/shared/pom.xml" />
+        <option value="$PROJECT_DIR$/services/lambda/CustomsClearance/pom.xml" />
+        <option value="$PROJECT_DIR$/services/customs/HelloWorldFunction/pom.xml" />
+        <option value="$PROJECT_DIR$/services/importer/pom.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="11" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+</project>
