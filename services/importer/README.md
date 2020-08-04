@@ -18,10 +18,17 @@ add the code to interact with the SDK client based on your use case.
 mvn clean install
 ```
 
+#### Generating S3 event to test locally
+```
+sam local generate-event s3 put --bucket budgetchimp/transactions-intake --key cc-dump-1.csv > s3_event.json
+```
 #### Testing it locally
 ```
 sam local invoke
+sam local invoke AppFunction --event s3_event.json
 ```
+
+
 
 #### Adding more SDK clients
 To add more service clients, you need to add the specific services modules in `pom.xml` and create the clients in `DependencyFactory` following the same 
