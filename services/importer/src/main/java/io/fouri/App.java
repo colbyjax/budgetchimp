@@ -4,6 +4,8 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.S3Event;
 import com.amazonaws.services.lambda.runtime.events.models.s3.S3EventNotification;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.services.s3.S3Client;
 
 /**
@@ -14,6 +16,7 @@ import software.amazon.awssdk.services.s3.S3Client;
  */
 public class App implements RequestHandler<S3Event, String> {
     private final S3Client s3Client;
+    private static final Logger logger = LogManager.getLogger(App.class);
 
     public App() {
         // Initialize the SDK client outside of the handler method so that it can be reused for subsequent invocations.
@@ -28,8 +31,7 @@ public class App implements RequestHandler<S3Event, String> {
         String srcBucket = record.getS3().getBucket().getName();
 
         String srcKey = record.getS3().getObject().getUrlDecodedKey();
-        System.out.println("Received Lambda Trigger from S3: " + srcKey);
-
+        logger.info("Received Lambda Trigger from S3: " + srcKey);
         TransactionHandler.handleTransaction(srcBucket,srcKey);
 
         return "Ok";
