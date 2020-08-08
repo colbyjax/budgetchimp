@@ -1,5 +1,9 @@
 package io.fouri;
 
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
@@ -8,6 +12,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.bean.CsvToBeanBuilder;
+import io.fouri.budgetchimp.dao.TransactionDao;
 import io.fouri.domain.ChaseTransaction;
 import io.fouri.domain.Transaction;
 import io.fouri.shared.ConfigProvider;
@@ -16,11 +21,15 @@ import org.apache.logging.log4j.Logger;
 
 
 import java.io.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 public class TransactionHandler {
     private static final ConfigProvider config = new ConfigProvider();
     private static final Logger logger = LogManager.getLogger(TransactionHandler.class);
+    public static final Regions DYNAMO_REGION = Regions.US_EAST_1;
 
     public static void handleTransaction(String srcBucket, String srcKey)  {
         List<Transaction> transactions = null;
@@ -40,10 +49,11 @@ public class TransactionHandler {
             try {
                 if (transactions != null) {
                     ObjectMapper objectMapper = new ObjectMapper();
-                    for (ChaseTransaction transaction : transactions) {
+                    for (Transaction transaction : transactions) {
                         logger.info(objectMapper.writeValueAsString(transaction));
                         break;
                     }
+                    importTransactions(transactions);
                     successfulImport = true;
                 } else {
                     logger.error("Transactions empty!");
@@ -78,7 +88,27 @@ public class TransactionHandler {
      * @return true if successfully loaded into database, otherwise false
      */
     public static boolean importTransactions(List<Transaction> transactions) {
-        //TODO: Implement Database Logic
+        logger.debug("Importing Transactions into Database");
+        int count = 0;
+        for(Transaction transaction:transactions) {
+            TransactionDao dao = new TransactionDao();
+            String pk = "USER#beckham";
+            String sk = formatDate(transaction.getTransactionDate()) + "#" + Math.random();
+
+            dao.setPk(pk);
+            dao.setSk(sk);
+
+            dao.setTransactionDate(formatDate(transaction.getTransactionDate()));
+            dao.setPostDate(formatDate(transaction.getPostDate()));
+            dao.setDescription(transaction.getDescription());
+            dao.setCategory(transaction.getCategory());
+            dao.setType(transaction.getType());
+            dao.setAmount(transaction.getAmount());
+            TransactionHandler.getMapper().save(dao);
+            logger.debug("Transaction Imported: " + sk + "#" + transaction.getDescription());
+            count++;
+        }
+        logger.info("Transactions Import Complete: " + count);
         return true;
     }
 
@@ -102,6 +132,30 @@ public class TransactionHandler {
             logger.info("Moving ERROR Import File: " + srcKey);
             return false;
         }
+    }
+
+    /***
+     * Helper method to build connection and return Dyanamo Mapper
+     * @return
+     */
+    private static DynamoDBMapper getMapper() {
+        AmazonDynamoDB client =  AmazonDynamoDBClientBuilder.standard().withRegion(DYNAMO_REGION).build();
+        DynamoDBMapper mapper = new DynamoDBMapper(client);
+
+        return mapper;
+    }
+
+    /**
+     * Helper function that takes in the original string of a date and returns a useable string for NoSQL
+     * @param inDate
+     * @return
+     */
+    private static String formatDate(String inDate) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/yy", Locale.ENGLISH);
+        LocalDate dateTime = LocalDate.parse(inDate, formatter);
+        DateTimeFormatter newFormat =  DateTimeFormatter.ofPattern("yyyyMMdd");
+        String outDate = newFormat.format(dateTime);
+        return outDate;
     }
 
 }
