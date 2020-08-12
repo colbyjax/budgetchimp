@@ -1,4 +1,4 @@
-package io.fouri.budgetchimp;
+package io.fouri.budgetchimp.budgetchimp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

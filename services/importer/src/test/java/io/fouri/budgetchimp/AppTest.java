@@ -1,4 +1,4 @@
-package io.fouri;
+package io.fouri.budgetchimp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

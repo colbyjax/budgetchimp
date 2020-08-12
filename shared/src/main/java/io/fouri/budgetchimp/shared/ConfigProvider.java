@@ -1,5 +1,4 @@
-package io.fouri.shared;
-import java.io.FileInputStream;
+package io.fouri.budgetchimp.shared;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
