@@ -40,7 +40,6 @@ public class ChaseTransaction  {
 
     /**
      * Converts Chase Transaction to BudgetChimp Transaction
-     * @param chaseTransaction Chase Transaction
      * @return BudgetChimp Transaction
      */
     public Transaction convertToTransaction() {

@@ -87,6 +87,8 @@ public abstract class TransactionHandler {
         DynamoDbTable<TransactionDao> table = ddb.table(DYNAMO_TABLE, TableSchema.fromBean(TransactionDao.class));
 
         logger.debug("Importing Transactions into Database: " + transactions.size());
+
+
         int count = 0;
         for(Transaction transaction:transactions) {
             TransactionDao dao = new TransactionDao();
@@ -94,6 +96,7 @@ public abstract class TransactionHandler {
             String sk = transaction.getTransactionDate() + ":" + transaction.getId();
             dao.setPk(pk);
             dao.setSk(sk);
+            dao.setSource(transaction.getSource());
             dao.setTransactionDate(transaction.getTransactionDate());
             dao.setDescription(transaction.getDescription());
             dao.setCategory(transaction.getCategory());
@@ -101,7 +104,7 @@ public abstract class TransactionHandler {
             dao.setAmount(transaction.getAmount());
 
             try {
-                //TODO: Put batch request in
+                //TODO: Consider a  batch request
                 table.putItem(dao);
             } catch (DynamoDbException e) {
                 logger.error("Exception thrown while importing items into Database");

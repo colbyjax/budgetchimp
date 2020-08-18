@@ -10,8 +10,14 @@ This project contains an AWS Lambda maven application with [AWS Java SDK 2.x](ht
 
 ## Development
 
-The generated function handler class just returns the input. The configured AWS Java SDK client is created in `DependencyFactory` class and you can 
-add the code to interact with the SDK client based on your use case.
+*  App - Main entry point of application. Responsible for listing to S3 events and determining transaction file type and sending 
+to the correct Handler.
+* Handlers - TransactionHandler is the main abstract class that other Handlers are derived. It houses most
+of the logic needed to handle the S3 files and insertions into the Database.  Handler classes derived from this should
+only contain logic specific to converting institution specific transactions into generic transactions for TransactionHandler
+to manage.
+* Shared Package contains all classes and configuations that will be shared for BudgetChimp. This includes
+domain objects, DAO accessors, and configuration files.
 
 #### Building the project
 ```

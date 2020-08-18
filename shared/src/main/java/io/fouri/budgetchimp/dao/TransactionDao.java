@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 public class TransactionDao {
     private String pk;
     private String sk;
+    private String source;
     private String category;
     private String description;
     private String transactionDate;
@@ -26,6 +27,14 @@ public class TransactionDao {
     @DynamoDbSortKey
     public String getSk() { return this.sk; }
     public void setSk(String sk) { this.sk = sk; }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
 
     public String getCategory() {
         return category;
