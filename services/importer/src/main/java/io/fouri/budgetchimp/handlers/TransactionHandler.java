@@ -1,4 +1,4 @@
-package io.fouri.budgetchimp.budgetchimp.handlers;
+package io.fouri.budgetchimp.handlers;
 
 
 import io.fouri.budgetchimp.DependencyFactory;
@@ -27,24 +27,32 @@ import java.util.List;
 public abstract class TransactionHandler {
     private final ConfigProvider config = new ConfigProvider();
     private final Logger logger = LogManager.getLogger(TransactionHandler.class);
-    private final String RUN_MODE = config.get("run-mode");
+    protected final String RUN_MODE = config.get("run-mode");
     private final String DYNAMO_TABLE = config.get("dynamo-table");
     private final String USER_PREFIX = config.get("user-prefix");
+    private final String USER_SUFFIX = config.get("user-suffix");
 
     private S3Client s3;
     private String srcBucket;
     private String srcKey;
+    private String file;
     @Setter
     private List<Transaction> transactions;
 
 
-    public TransactionHandler(String srcBucket, String srcKey) {
+    public TransactionHandler(String srcBucket, String srcKey, String file) {
         this.srcBucket = srcBucket;
         this.srcKey = srcKey;
         this.s3 = DependencyFactory.s3Client();
         this.transactions = null;
+        this.file = file;
     }
 
+    /**
+     * handleTransaction is the actual implementation of handling a specific transaction file. The caller (App) simply expects the transaction
+     * to be handled and all state handled within here.  App does not need to be aware of success or failure.
+     * The buck stops here.  Super calls should be used frequently as re-usable code should be put within Abstract (this) class
+     */
     public abstract void handleTransaction();
 
     /**
@@ -61,38 +69,23 @@ public abstract class TransactionHandler {
         return reader;
     }
 
-    /**
-     * Only method called from Subclasses to import into database and move files
-     * @param transactions
-     * @return
-     */
-    protected boolean processTransactions(List<Transaction> transactions) {
-        boolean result = importTransactions(transactions);
-
-        // If running debug mode, do not move the file
-        if(!RUN_MODE.equals("debug")) {
-            result = moveFile(result);
-        }
-        return result;
-    }
 
     /**
      * Helper function to import transactions into the database.
      * @param transactions - Transactions from the CSV file
      * @return true if successfully loaded into database, otherwise false
      */
-    private boolean importTransactions(List<Transaction> transactions) {
+    protected boolean importTransactions(List<Transaction> transactions) {
 
         DynamoDbEnhancedClient ddb = DependencyFactory.dynamoDbClient();
         DynamoDbTable<TransactionDao> table = ddb.table(DYNAMO_TABLE, TableSchema.fromBean(TransactionDao.class));
 
         logger.debug("Importing Transactions into Database: " + transactions.size());
 
-
         int count = 0;
         for(Transaction transaction:transactions) {
             TransactionDao dao = new TransactionDao();
-            String pk = USER_PREFIX + ":beckham";
+            String pk = USER_PREFIX + ":" + USER_SUFFIX;
             String sk = transaction.getTransactionDate() + ":" + transaction.getId();
             dao.setPk(pk);
             dao.setSk(sk);
@@ -123,8 +116,9 @@ public abstract class TransactionHandler {
      * Helper function to move the file after processing is completed to either 'processed' or 'error'
      * @return
      */
-    private boolean moveFile(boolean successfulImport) {
-        String destinationBucket = (successfulImport) ? config.get("success-bucket") : config.get("error-bucket");
+    protected boolean moveFile(boolean successfulImport) {
+        String destinationKey = (successfulImport) ?  ( config.get("success-prefix") + "/" + file )
+                : ( config.get("error-prefix") + "/" + file);
 
         String encodedUrl = null;
         try {
@@ -139,8 +133,8 @@ public abstract class TransactionHandler {
                 .build();
         CopyObjectRequest copyObjectRequest = CopyObjectRequest.builder()
                 .copySource(encodedUrl)
-                .destinationBucket(destinationBucket)
-                .destinationKey(srcKey)
+                .destinationBucket(srcBucket)
+                .destinationKey(destinationKey)
                 .build();
         try {
             s3.copyObject(copyObjectRequest);
@@ -150,7 +144,7 @@ public abstract class TransactionHandler {
             e.printStackTrace();
         }
 
-        logger.info("Moved Import File: " + srcKey + " to " + destinationBucket);
+        logger.info("Moved Import File: " + srcKey + " to " + destinationKey);
         return true;
     }
 

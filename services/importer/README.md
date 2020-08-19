@@ -8,8 +8,10 @@ This project contains an AWS Lambda maven application with [AWS Java SDK 2.x](ht
 - [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
 - Docker
 
-## Development
+## Colby Notes
+- make sure to renew Yubi token from terminal (script)
 
+## Development
 *  App - Main entry point of application. Responsible for listing to S3 events and determining transaction file type and sending 
 to the correct Handler.
 * Handlers - TransactionHandler is the main abstract class that other Handlers are derived. It houses most
@@ -18,6 +20,8 @@ only contain logic specific to converting institution specific transactions into
 to manage.
 * Shared Package contains all classes and configuations that will be shared for BudgetChimp. This includes
 domain objects, DAO accessors, and configuration files.
+
+
 
 #### Building the project
 ```
@@ -35,12 +39,13 @@ sam local invoke AppFunction --event s3_event.json
 ```
 
 
-
 #### Adding more SDK clients
 To add more service clients, you need to add the specific services modules in `pom.xml` and create the clients in `DependencyFactory` following the same 
 pattern as s3Client.
 
 ## Deployment
+
+* From IntelliJ AWS Explorer - Can right-click the lambda function and choose to update Function code or configuation
 
 The generated project contains a default [SAM template](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html) file `template.yaml` where you can 
 configure different properties of your lambda function such as memory size and timeout. You might also need to add specific policies to the lambda function

@@ -14,8 +14,10 @@ public class ConfigProvider {
     private static final Logger logger = LogManager.getLogger(ConfigProvider.class);
 
     public ConfigProvider() {
-        //TODO: Add environment variable pull from System
-        properties = this.initialize("dev");
+        String environment = System.getenv("BUDGETCHIMP_RUNMODE");
+        logger.info("BudgetChimp RUNMODE: " + environment);
+        environment = environment.isEmpty() ? "dev" : environment;
+        properties = this.initialize(environment);
     }
 
     /**

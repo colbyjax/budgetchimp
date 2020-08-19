@@ -4,8 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.S3Event;
 import com.amazonaws.services.lambda.runtime.events.models.s3.S3EventNotification;
-import io.fouri.budgetchimp.budgetchimp.handlers.ChaseHandler;
-import io.fouri.budgetchimp.budgetchimp.handlers.TransactionHandler;
+import io.fouri.budgetchimp.handlers.ChaseHandler;
 import io.fouri.budgetchimp.shared.ConfigProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +20,7 @@ public class App implements RequestHandler<S3Event, String> {
     private final S3Client s3Client;
     private static final Logger logger = LogManager.getLogger(App.class);
     private final ConfigProvider config = new ConfigProvider();
-
+    private final String INTAKE_PREFIX = config.get("intake-prefix");
 
     //TODO: Not scalable -- rethink different transaction handlers - Move to configurable format
     private final String CHASE_PREFIX = config.get("chase-prefix");
@@ -43,9 +42,19 @@ public class App implements RequestHandler<S3Event, String> {
         String srcKey = record.getS3().getObject().getUrlDecodedKey();
         logger.info("Received Lambda Trigger from S3: " + srcKey);
 
+        String[] tokens = srcKey.split("/");
+        if(tokens.length != 2) {
+            logger.error("Splitting Intake Folder from File has unexpected number of fields: " + tokens.length + " --> " + srcKey);
+            return "Failed: Unknown Intake Folder";
+        }
+
+        String folder = tokens[0];
+        String file = tokens[1];
+
         // Determine Transaction File type to send to the correct Transaction Handler
-        if(srcKey.startsWith(CHASE_PREFIX)) {
-            ChaseHandler chaseHandler = new ChaseHandler(srcBucket, srcKey);
+        if(file.startsWith(CHASE_PREFIX)) {
+            logger.info("Handling Chase Transaction File: " + file);
+            ChaseHandler chaseHandler = new ChaseHandler(srcBucket, srcKey, file);
             chaseHandler.handleTransaction();
 
         } else if(srcKey.startsWith(COASTLINE_PREFIX)) {
