@@ -78,12 +78,7 @@
             <version>3.2.4</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-s3</artifactId>
-            <version>1.11.523</version>
-            <scope>compile</scope>
-        </dependency>
+
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-events</artifactId>
